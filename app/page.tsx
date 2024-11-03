@@ -50,7 +50,7 @@ export default function Home() {
         <CardBody className="flex shrink-0 flex-row items-center gap-6">
           <Image
             className="hidden lg:block "
-            alt="placeholder."
+            alt={breed.name} 
             height={72}
             width={72}
             radius="lg"
@@ -114,7 +114,7 @@ export default function Home() {
               {base64Image ? (
                 <img
                   className="aspect-square lg:min-h-[650px] max-h-[650px] lg:min-w-[650px] max-w-[650px] object-cover rounded-xl"
-                  alt="Generated dog breeds image"
+                  alt="Generated dog breeds"
                   src={`data:image/png;base64,${base64Image}`} // Renders the base64 image
                 />
               ) : isGenerating ? (<Spinner label="Loading your fluffy mixture... This might take a while..." color="success" />) : <></>}
