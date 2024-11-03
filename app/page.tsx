@@ -1,72 +1,139 @@
-"use client"
+"use client";
 
 import { Button } from "@nextui-org/button";
-// import { Input } from "@nextui-org/input";
-import { Card, CardBody, Checkbox, Image } from "@nextui-org/react";
+import { Card, CardBody, Checkbox, Image, Spinner } from "@nextui-org/react";
+import { useState } from "react";
 
 export default function Home() {
+  const [isGenerating, setGenerating] = useState(false);
+  const [base64Image, setBase64Image] = useState<string | null>(null); // State for the returned image
+  const [selectedBreeds, setSelectedBreeds] = useState<string[]>([])
+
+  const selectBreed = (item: string) => {
+    setSelectedBreeds((prevList) => [...prevList, item])
+  }
+
+  const deSelectBreed = (item: string) => {
+    setSelectedBreeds((prevList) => prevList.filter((i) => i !== item))
+  }
 
   const breeds = [
-    { name: "French Bulldog", image: "french-bulldog.avif" },
-    { name: "Labrador Retriever", image: "labrador-retriever.avif" },
-    { name: "Golden Retriever", image: "golden-retriever.avif" },
-    { name: "German Shepherd", image: "german-shepherd.avif" },
-    { name: "Poodle", image: "poodle.avif" },
-    { name: "Bulldog", image: "bulldog.avif" },
-    { name: "Rottweiler", image: "rottweiler.avif" },
-    { name: "Beagle", image: "beagle.avif" },
-    { name: "Daschund", image: "daschund.avif" },
-    { name: "German Shorthaired Pointer", image: "german-shorthaired-pointer.avif" },
-    { name: "Pembroke Welsh Corgi", image: "pembroke-welsh-corgi.avif" },
-    { name: "Australian Shepherd", image: "australian-shepherd.avif" },
-    { name: "Yorkshire Terrier", image: "yorkshire-terrier.avif" },
-    { name: "Cavalier King Charles Spaniel", image: "cavalier-king-charles-spaniel.avif" },
-    { name: "Doberman Pinscher", image: "doberman-pinscher.avif" },
-    { name: "Boxer", image: "boxer.avif" },
-    { name: "Miniature Schnauzer", image: "miniature-schnauzer.avif" },
-    { name: "Cane Corso", image: "cane-corso.avif" },
-    { name: "Great Dane", image: "great-dane.avif" },
-    { name: "Shih Tzu", image: "shih-tzu.avif" },
-  ]
+    { name: "French Bulldog", image: "breeds/french-bulldog.avif" },
+    { name: "Labrador Retriever", image: "breeds/labrador-retriever.avif" },
+    { name: "Golden Retriever", image: "breeds/golden-retriever.avif" },
+    { name: "German Shepherd", image: "breeds/german-shepherd.avif" },
+    { name: "Poodle", image: "breeds/poodle.avif" },
+    { name: "Bulldog", image: "breeds/bulldog.avif" },
+    { name: "Rottweiler", image: "breeds/rottweiler.avif" },
+    { name: "Beagle", image: "breeds/beagle.avif" },
+    { name: "Dachshund", image: "breeds/dachshund.avif" },
+    { name: "German Shorthaired Pointer", image: "breeds/german-shorthaired-pointer.avif" },
+    { name: "Pembroke Welsh Corgi", image: "breeds/pembroke-welsh-corgi.avif" },
+    { name: "Australian Shepherd", image: "breeds/australian-shepherd.avif" },
+    { name: "Yorkshire Terrier", image: "breeds/yorkshire-terrier.avif" },
+    { name: "Cavalier King Charles Spaniel", image: "breeds/cavalier-king-charles-spaniel.avif" },
+    { name: "Doberman Pinscher", image: "breeds/doberman-pinscher.avif" },
+    { name: "Boxer", image: "breeds/boxer.avif" },
+    { name: "Miniature Schnauzer", image: "breeds/miniature-schnauzer.avif" },
+    { name: "Cane Corso", image: "breeds/cane-corso.avif" },
+    { name: "Great Dane", image: "breeds/great-dane.avif" },
+    { name: "Shih Tzu", image: "breeds/shih-tzu.avif" },
+  ];
+
+  breeds.sort((a, b) => {
+    return a.name.replace(/\s+/g, '').toLowerCase().localeCompare(b.name.replace(/\s+/g, '').toLowerCase());
+  });
 
   const renderDogCards = () => {
     return breeds.map((breed, index) => (
-      <Card key={index} className="min-h-24">
-        <CardBody className="flex flex-row items-center gap-6">
+      <Card key={index} className="min-h-24 hover:scale-105 mr-8 ml-8">
+        <CardBody className="flex shrink-0 flex-row items-center gap-6">
           <Image
-            className="hidden lg:block"
+            className="hidden lg:block "
             alt="placeholder."
             height={72}
             width={72}
             radius="lg"
-            src="generic-dog.avif"
+            src={breed.image}
             isZoomed={true}
           />
           <h2 className="flex-grow">{breed.name}</h2>
-          <Checkbox className="mr-2" color="secondary"></Checkbox>
+          <Checkbox
+            className="mr-2"
+            color="secondary"
+            isReadOnly={isGenerating}
+            onChange={() => {
+              if (selectedBreeds.includes(breed.name)) {
+                deSelectBreed(breed.name)
+              } else {
+                selectBreed(breed.name)
+              }
+            }}
+          ></Checkbox>
         </CardBody>
       </Card>
     ));
-  }
+  };
+
+  const handleGenerate = async () => {
+    if (selectedBreeds.length === 0) {
+      return;
+    }
+    setGenerating(true);
+    setBase64Image(null)
+    console.log(selectedBreeds)
+    try {
+      const response = await fetch("http://127.0.0.1:5000/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: selectedBreeds }), // Sends selected breeds
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate image");
+      }
+
+      const data = await response.json();
+      setBase64Image(data.image_base64); // Set the returned base64 image
+    } catch (error) {
+      console.error("Error generating image:", error);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <>
-      <div className="min-h-screen max-h-screen min-w-screen flex"> {/** Container for the two panels, centers everything vertically */}
-        <div className="m-8 gap-8 max-h-full flex flex-grow flex-row items-center"> {/** Another container, mainly used for centering everything horizontally */}
-          <div className="bg-neutral-800 flex min-h-full w-3/4 rounded-3xl border-double border-2 border-neutral-600"> {/** Container for the image generation (Really only needs a skeleton image component*/}
-            <div className="flex-grow m-6"> {/** I want to avoid the borders overlapping with the content */}
-              <p>Breh</p>
+      <div className="min-h-screen max-h-screen min-w-screen flex">
+        <div className="m-8 gap-8 max-h-full flex flex-grow flex-row items-center">
+          <div className="bg-neutral-800 flex flex-col min-h-full w-3/4 rounded-3xl border-double border-2 border-neutral-600 text-center">
+          <h1 className="mt-6 font-bold min-w-full">Image Panel</h1>
+            <div className="max-h-full flex flex-grow m-6 justify-center items-center">
+              {base64Image ? (
+                <img
+                  className="aspect-square lg:min-h-[650px] max-h-[650px] lg:min-w-[650px] max-w-[650px] object-cover rounded-xl"
+                  alt="Generated dog breeds image"
+                  src={`data:image/png;base64,${base64Image}`} // Renders the base64 image
+                />
+              ) : isGenerating ? (<Spinner label="Loading your fluffy mixture... This might take a while..." color="success" />) : <></>}
             </div>
           </div>
-          <div className="bg-neutral-800 max-h-full flex min-h-full flex-grow rounded-3xl border-double border-2 border-neutral-600"> {/** Skinny panel on the right with options*/}
-            <div className="flex max-h-full flex-col gap-6 flex-grow m-6 text-center"> {/** Container to hold items and prevent overlap with corner radii */}
-              {/* <Input type="search" label="Search breeds..."/> Not important for now, we can add this later.*/}
+          <div className="bg-neutral-800 max-h-full flex min-h-full flex-grow rounded-3xl border-double border-2 border-neutral-600">
+            <div className="flex max-h-full flex-col gap-6 flex-grow mt-6 mb-6 text-center">
               <h1 className="font-bold">Dog Breeds</h1>
-              <div className="flex-grow flex flex-col overflow-y-scroll gap-1"> {/** Holds all breed cards */}
+              <div className="flex-grow flex flex-col overflow-x-clip overflow-y-scroll gap-1">
                 {renderDogCards()}
               </div>
-              <div className="flex flex-row justify-center"> {/** Container so that I can center my button without it taking the entire width of the parent container */}
-                <Button className="w-1/2 font-semibold">Generate</Button>
+              <div className="flex flex-row gap-3 justify-center">
+                <Button
+                  className="w-1/2 font-semibold"
+                  isLoading={isGenerating}
+                  onPress={handleGenerate}
+                >
+                  Generate
+                </Button>
               </div>
             </div>
           </div>
