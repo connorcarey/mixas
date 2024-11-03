@@ -83,7 +83,7 @@ export default function Home() {
     setBase64Image(null)
     console.log(selectedBreeds)
     try {
-      const response = await fetch("https://mixas-backend-6a9e7662ec77.herokuapp.com/generate-image", {
+      const response = await fetch("https://mixas-backend-6a9e7662ec77.herokuapp.com/schmebulock", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
